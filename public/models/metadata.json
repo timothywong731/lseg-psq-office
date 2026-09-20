@@ -1,0 +1,14 @@
+{
+  "seed": 731,
+  "scene": "Paternoster Square | Spatial Study",
+  "objects": 80,
+  "vertices": 19660,
+  "floors": 7,
+  "height": 32.55,
+  "plan_shape": "trapezium",
+  "wide_end": 14.5,
+  "narrow_end": 8.5,
+  "stair_rises_toward": "launch balcony",
+  "launch_button": true,
+  "estimated_dimensions": true
+}

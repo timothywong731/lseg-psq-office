@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f4ee" />
+    <meta name="description" content="Explore a photo-based 3D reconstruction of the Paternoster Square office: its glazed atrium, entrance and balcony. An interactive architectural study made in Blender." />
+    <title>Paternoster Square — An Interior Study</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#scene">Skip to interactive model</a>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Model controls">
+        <a class="brand" href="#atrium" aria-label="Paternoster Square home">
+          <svg class="brand-mark" viewBox="0 0 36 36" fill="none" aria-hidden="true"><path d="M4 9 18 2l14 7v18l-14 7-14-7Z" stroke="currentColor" stroke-width="1.4"/><path d="m4 9 14 7 14-7M18 16v18M10 6v18l14 7M26 6v18l-14 7" stroke="currentColor" stroke-width="1.1"/></svg>
+          <span>SPACES<span class="brand-sub">AN ARCHITECTURAL STUDY</span></span>
+        </a>
+
+        <div class="intro">
+          <p class="eyebrow">LONDON · EC4M</p>
+          <h1>Paternoster<br/><em>Square.</em></h1>
+          <p class="intro-copy">A study in glass, light <br/>and connection.</p>
+        </div>
+
+        <section class="view-section" aria-labelledby="explore-label">
+          <div class="section-heading"><h2 id="explore-label">EXPLORE THE INTERIOR</h2><span>03 VIEWS</span></div>
+          <nav class="views" aria-label="Camera viewpoints">
+            <button class="view-button active" data-view="atrium" aria-pressed="true"><span class="view-number">01</span><span class="view-copy"><strong>The atrium</strong><small>Light at the heart of the building</small></span><span class="view-arrow" aria-hidden="true">↗</span></button>
+            <button class="view-button" data-view="entrance" aria-pressed="false"><span class="view-number">02</span><span class="view-copy"><strong>The entrance</strong><small>A sense of arrival</small></span><span class="view-arrow" aria-hidden="true">↗</span></button>
+            <button class="view-button" data-view="balcony" aria-pressed="false"><span class="view-number">03</span><span class="view-copy"><strong>The balcony</strong><small>A different perspective</small></span><span class="view-arrow" aria-hidden="true">↗</span></button>
+          </nav>
+          <button id="launch-view" class="launch-link">Explore the 1F launch button <span aria-hidden="true">↗</span></button>
+        </section>
+
+        <section class="atmosphere" aria-labelledby="atmosphere-label">
+          <div class="section-heading"><h2 id="atmosphere-label">ATMOSPHERE</h2><output for="daylight" id="daylight-value">Daylight</output></div>
+          <label class="range-label" for="daylight"><span aria-hidden="true">☾</span><input id="daylight" type="range" min="0" max="100" value="78" aria-label="Daylight intensity"/><span aria-hidden="true">☼</span></label>
+          <label class="toggle-row" for="roof"><span>Glass roof</span><input id="roof" type="checkbox" checked/><span class="switch" aria-hidden="true"></span></label>
+          <label class="toggle-row" for="annotations"><span>Points of interest</span><input id="annotations" type="checkbox" checked/><span class="switch" aria-hidden="true"></span></label>
+          <label class="toggle-row" for="ticker"><span>Animated tickers</span><input id="ticker" type="checkbox" checked/><span class="switch" aria-hidden="true"></span></label>
+        </section>
+
+        <section class="plan-section" aria-label="Atrium orientation">
+          <div class="section-heading"><h2>YOUR PERSPECTIVE</h2><span id="level-label">GROUND LEVEL</span></div>
+          <svg class="floor-plan" viewBox="0 0 256 122" fill="none" aria-label="Diagram of the tapered atrium, wider at the launch balcony and narrower at the far entrance" role="img">
+            <path d="M44 8 212 30v62L44 114Z" stroke="#b9bcb3"/><path d="m61 22 134 20v38L61 100Z" fill="#eeeee6" stroke="#acb4aa"/>
+            <path d="m61 31 134 19M61 91l134-19M76 24v73M179 40v43M44 46h17m-17 29h17m134-25h17m-17 25h17" stroke="#c2c8bd"/>
+            <path d="M82 82h55m-55-4h55m-55-4h55m-55-4h55" stroke="#a5aea1"/>
+            <path d="m144 53 7 7-7 7-7-7z" stroke="#66785e"/>
+            <text x="103" y="54" fill="#8b9385" font-size="8" font-family="sans-serif" letter-spacing="2">ATRIUM</text>
+            <g id="plan-marker" transform="translate(82 45)"><path d="m0 0 30-12v24z" fill="#53735b" fill-opacity=".15"/><circle r="4" fill="#41654c"/><circle r="7" stroke="#41654c" stroke-opacity=".3"/></g>
+          </svg>
+          <p class="plan-caption">Schematic plan · not to scale</p>
+        </section>
+
+        <div class="sidebar-bottom"><button id="about-button" class="text-button"><span class="info-icon" aria-hidden="true">i</span> About this reconstruction <span aria-hidden="true">↗</span></button><div class="edition"><span>PATERNOSTER SQUARE</span><span>STUDY № 001</span></div></div>
+      </aside>
+
+      <main class="main-panel">
+        <header class="topbar"><span class="breadcrumb">SPACES <span>/</span> PATERNOSTER SQUARE</span><div class="model-status" role="status"><span class="status-dot"></span><span id="status-text">Loading model</span></div></header>
+        <div class="viewport" id="viewport">
+          <canvas id="scene" tabindex="0" aria-label="Interactive 3D office interior. Drag to orbit, scroll to zoom, right-drag to pan. Use keys 1, 2 or 3 to change viewpoint and R to reset." aria-describedby="navigation-help"></canvas>
+          <div class="viewport-top"><span class="tag"><span class="tiny-square"></span> INTERIOR EXPLORER</span><span class="render-label">BLENDER MODEL · REAL-TIME VIEW</span></div>
+
+          <div class="toolbar" role="group" aria-label="Viewer actions">
+            <button id="reset" class="icon-button" title="Reset view (R)" aria-label="Reset camera"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9a8 8 0 1 1 .5 7M4 4v5h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <button id="snapshot" class="icon-button" title="Save image" aria-label="Save current view as image"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7h4l2-3h4l2 3h4v13H4z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.5" stroke="currentColor" stroke-width="1.5"/></svg></button>
+            <button id="fullscreen" class="icon-button" title="Fullscreen" aria-label="Enter fullscreen"><svg viewBox="0 0 24 24" fill="none"><path d="M9 4H4v5m11-5h5v5M4 15v5h5m11-5v5h-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          </div>
+
+          <div id="hotspots" class="hotspots" aria-label="Points of interest">
+            <button class="hotspot" data-point="cube"><span>01</span><span class="hotspot-label">The market cube</span></button>
+            <button class="hotspot" data-point="gallery"><span>02</span><span class="hotspot-label">Layered galleries</span></button>
+            <button class="hotspot" data-point="roof"><span>03</span><span class="hotspot-label">A canopy of light</span></button>
+            <button class="hotspot" data-point="launch"><span>04</span><span class="hotspot-label">Market launch button</span></button>
+          </div>
+
+          <div class="view-caption"><p class="eyebrow" id="view-kicker">01 / THE CENTRAL SPACE</p><h2 id="view-title">Looking up. Looking in.</h2><p id="view-description">Seven layers of glass frame a shared, light-filled heart.</p></div>
+          <button id="tour" class="tour-button" aria-pressed="false"><span class="play-icon" aria-hidden="true">▷</span><span id="tour-label">Take a guided tour</span><span class="tour-duration">4 STOPS</span></button>
+
+          <div id="loading" class="loading-panel" role="status"><div class="loading-mark">PS</div><p>Opening the space<span class="loading-dots">…</span></p><div class="loading-track"><span id="load-progress"></span></div><small>Preparing your perspective</small></div>
+          <div id="error" class="error-panel" hidden role="alert"><h2>The view couldn’t load.</h2><p id="error-message">Please check your connection and try again.</p><button id="retry" class="primary-button">Try again</button><a href="./models/paternoster.glb" download>Download the 3D model instead</a></div>
+          <div id="annotation-card" class="annotation-card" hidden><button class="close-button" id="close-annotation" aria-label="Close point of interest">×</button><p class="eyebrow" id="annotation-kicker"></p><h3 id="annotation-title"></h3><p id="annotation-copy"></p></div>
+          <div id="toast" class="toast" role="status" hidden></div>
+        </div>
+        <footer class="viewer-footer"><div id="navigation-help"><span class="mouse-icon" aria-hidden="true"></span><span><b>Drag</b> to orbit</span><span class="help-separator">·</span><span><b>Scroll</b> to zoom</span><span class="help-separator">·</span><span><b>Right-drag</b> to pan</span></div><span class="touch-help">One finger to orbit · Pinch to zoom</span><a class="download-link" href="./models/paternoster.glb" download="paternoster-square.glb">Download model <span aria-hidden="true">↓</span></a></footer>
+      </main>
+    </div>
+
+    <dialog id="about-dialog" aria-labelledby="about-title"><button class="close-button" id="close-about" aria-label="Close about dialog">×</button><p class="eyebrow">BEHIND THE SPACE</p><h2 id="about-title">Built from a<br/><em>different perspective.</em></h2><p>A visual reconstruction of the Paternoster Square office, informed by eleven photographs and three walkthrough videos recorded in September 2026.</p><p>The atrium, glazed galleries, entrance gates, stair and market-display cube were procedurally modelled in Blender and brought to the browser with Three.js.</p><div class="about-note"><strong>A spatial interpretation</strong><p>Dimensions, floor arrangement and materials are estimated from the references, not a measured survey. Market graphics are illustrative, not live data. This independent study is not affiliated with or endorsed by LSEG.</p></div><a class="primary-button" href="./models/paternoster.glb" download="paternoster-square.glb">Download the Blender-built model <span aria-hidden="true">↓</span></a></dialog>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

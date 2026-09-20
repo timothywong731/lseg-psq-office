@@ -1,4 +1,4 @@
-﻿import { InteriorViewer } from './viewer.js';
+import { InteriorViewer } from './viewer.js';
 import { VIEWS, POINTS } from './views.js';
 
 const $ = (selector) => document.querySelector(selector);
@@ -28,6 +28,8 @@ function showView(name, { fromTour = false, animate = true } = {}) {
   if (!fromTour) stopTour();
   currentView = name;
   viewer?.setView(name, animate);
+  if (name === 'drone') viewer?.setDrone(true);
+  $('#more-views').value = ['third', 'reception', 'lifts', 'office'].includes(name) ? name : '';
   const view = VIEWS[name];
   $('#view-kicker').textContent = view.kicker;
   $('#view-title').textContent = view.title;
@@ -44,7 +46,7 @@ function showView(name, { fromTour = false, animate = true } = {}) {
 }
 
 function setControlsEnabled(enabled) {
-  document.querySelectorAll('.view-button, #tour, #reset, #snapshot, #daylight, #roof, #annotations, #ticker, #launch-view').forEach((el) => { el.disabled = !enabled; });
+  document.querySelectorAll('.view-button, #tour, #reset, #snapshot, #daylight, #roof, #annotations, #ticker, #launch-view, #more-views, #drone, #market-toggle, #people, #sound').forEach((el) => { el.disabled = !enabled; });
 }
 
 function showError(error) {
@@ -67,19 +69,31 @@ async function boot() {
       onProgress: (progress) => { $('#load-progress').style.width = `${Math.round(progress * 100)}%`; },
       onInteraction: stopTour,
       onError: showError,
+      onDrone: (active) => {
+        $('#drone').setAttribute('aria-pressed', String(active));
+        $('#drone-label').textContent = active ? 'Pause drone flight' : 'Start continuous drone view';
+      },
+      onCeremony: (open) => {
+        $('#market-status').textContent = open ? 'Market Open' : 'Market Close';
+        $('#market-action').textContent = open ? 'Close the market' : 'Open the market';
+        $('#market-toggle').setAttribute('aria-pressed', String(open));
+        $('#market-dot').classList.toggle('open', open);
+        toast(open ? 'The market is open. Let the celebration begin.' : 'The market is closed. Thank you for joining us.');
+      },
     });
     showView(currentView, { animate: false });
     await viewer.load();
     viewer.setRoof($('#roof').checked);
     viewer.setAnnotations($('#annotations').checked);
     $('#ticker').checked = viewer.tickerPlaying;
+    $('#people').checked = viewer.peoplePlaying;
     $('#loading').classList.add('done');
     setTimeout(() => { $('#loading').hidden = true; }, 550);
     $('#status-text').textContent = 'Interactive model';
     $('.model-status').classList.add('ready');
     setControlsEnabled(true);
     // A read-only diagnostics snapshot allows browser tests to check real rendering state.
-    window.getViewerState = () => ({ ready: viewer.ready, view: viewer.currentView, position: viewer.camera.position.toArray(), target: viewer.controls.target.toArray(), roof: viewer.roofObjects.every((o) => o.visible), tickerPlaying: viewer.tickerPlaying, tickerOffset: [...viewer.tickerTextures][0]?.offset.x, meshCount: viewer.meshes.length, renderCalls: viewer.renderer.info.render.calls });
+    window.getViewerState = () => ({ ready: viewer.ready, view: viewer.currentView, position: viewer.camera.position.toArray(), target: viewer.controls.target.toArray(), roof: viewer.roofObjects.every((o) => o.visible), tickerPlaying: viewer.tickerPlaying, tickerOffset: [...viewer.tickerTextures][0]?.offset.x, meshCount: viewer.meshes.length, renderCalls: viewer.renderer.info.render.calls, marketOpen: viewer.market.open, ceremonyCount: viewer.market.count, celebrating: viewer.market.celebrating, confetti: viewer.ceremony.confetti.visible, lighting: viewer.ceremony.lights[0].intensity, drone: viewer.drone, peoplePlaying: viewer.peoplePlaying, people: viewer.occupants.counts, crowdTime: viewer.occupants.time, crowdCheering: viewer.occupants.cheering, screenFrame: viewer.screens.frame, walkerPosition: viewer.occupants.people.find((p) => p.kind === 'walker').root.position.toArray(), observerAnimationTime: viewer.occupants.people.find((p) => p.kind === 'observer').mixer.time, seatedAnimationTime: viewer.occupants.people.find((p) => p.kind === 'seated').mixer.time, sound: viewer.sound, audioState: viewer.ceremony.audio?.state, launchScreenPosition: viewer.getLaunchScreenPosition() });
   } catch (error) { showError(error); }
 }
 
@@ -95,6 +109,11 @@ $('#annotations').addEventListener('change', (event) => {
   if (!event.target.checked) $('#annotation-card').hidden = true;
 });
 $('#ticker').addEventListener('change', (event) => { if (viewer) viewer.tickerPlaying = event.target.checked; });
+$('#people').addEventListener('change', (event) => { if (viewer) viewer.peoplePlaying = event.target.checked; });
+$('#sound').addEventListener('change', (event) => { if (viewer) { viewer.sound = event.target.checked; if (!viewer.sound) viewer.ceremony.mute(); } });
+$('#market-toggle').addEventListener('click', () => viewer?.toggleMarket());
+$('#more-views').addEventListener('change', (event) => { if (event.target.value) showView(event.target.value); });
+$('#drone').addEventListener('click', () => { stopTour(); if (viewer?.drone) viewer.setDrone(false); else showView('drone'); });
 $('#launch-view').addEventListener('click', () => showView('launch'));
 $('#reset').addEventListener('click', () => { showView(currentView); toast('Camera reset'); });
 $('#snapshot').addEventListener('click', async () => {
@@ -142,11 +161,11 @@ $('#retry').addEventListener('click', () => location.reload());
 window.addEventListener('hashchange', () => showView(location.hash.slice(1)));
 window.addEventListener('keydown', (event) => {
   if (event.ctrlKey || event.metaKey || event.altKey || /INPUT|TEXTAREA|SELECT/.test(event.target.tagName) || $('#about-dialog').open || !viewer?.ready) return;
-  const name = { 1: 'atrium', 2: 'entrance', 3: 'balcony', 4: 'launch' }[event.key];
+  const name = { 1: 'atrium', 2: 'entrance', 3: 'balcony', 4: 'launch', 5: 'third', 6: 'reception', 7: 'lifts', 8: 'office' }[event.key];
   if (name) { event.preventDefault(); showView(name); }
   if (event.key.toLowerCase() === 'r') showView(currentView);
-  if (event.key === 'Escape') { stopTour(); $('#annotation-card').hidden = true; }
+  if (event.key.toLowerCase() === 'd') $('#drone').click();
+  if (event.key === 'Escape') { stopTour(); viewer.setDrone(false); $('#annotation-card').hidden = true; }
 });
 document.addEventListener('visibilitychange', () => { if (document.hidden) stopTour(); });
 boot();
-

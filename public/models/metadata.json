@@ -1,8 +1,8 @@
 {
   "seed": 731,
   "scene": "Paternoster Square | Spatial Study",
-  "objects": 80,
-  "vertices": 19660,
+  "objects": 105,
+  "vertices": 47964,
   "floors": 7,
   "height": 32.55,
   "plan_shape": "trapezium",
@@ -10,5 +10,10 @@
   "narrow_end": 8.5,
   "stair_rises_toward": "launch balcony",
   "launch_button": true,
-  "estimated_dimensions": true
+  "estimated_dimensions": true,
+  "lift_levels": 8,
+  "lifts_per_level": 6,
+  "lift_count": 48,
+  "workstations": 98,
+  "revision": 2
 }

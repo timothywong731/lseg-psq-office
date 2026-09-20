@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { VIEWS } from '../src/views.js';
+import { MarketState, seededRandom, walkingPosition } from '../src/simulation.js';
 
 const file = readFileSync(new URL('../public/models/paternoster.glb', import.meta.url));
 const jsonLength = file.readUInt32LE(12);
@@ -64,4 +65,57 @@ test('viewpoints and ticker texture coordinates are available', () => {
   const primitive = gltf.meshes[node.mesh].primitives[0];
   assert.ok(primitive.attributes.TEXCOORD_0 !== undefined);
   assert.ok(gltf.materials[primitive.material].pbrMetallicRoughness.baseColorTexture);
+});
+
+test('six lift doorways exist on every floor from ground through 7F', () => {
+  const doors = positions('LiftDoors');
+  for (let floor = 0; floor <= 7; floor++) {
+    const level = doors.filter((p) => p[1] >= floor * 4.1 - .01 && p[1] < floor * 4.1 + 2.6);
+    assert.ok(level.length > 0, `Missing lift bank on floor ${floor}`);
+    for (const side of [-1, 1]) for (const z of [18.8, 22, 25]) {
+      const leaf = level.filter((p) => Math.sign(p[0]) === side && Math.abs(p[2] - z) < 1);
+      assert.ok(leaf.length >= 16, `Missing doorway at ${floor}, ${side}, ${z}`);
+    }
+  }
+  const openings = positions('LiftLobbyWall');
+  assert.ok(openings.filter((p) => p[1] < 30 && p[1] > 6).length > 0);
+});
+
+test('reception is on one side and staircase separates glass from solid wall', () => {
+  assert.ok(positions('ReceptionDesk').every((p) => p[0] > 0));
+  assert.ok(component('ReceptionVideoWall'));
+  assert.ok(component('StairSolidWall'));
+  assert.ok(component('StairSeparator'));
+  const glass = positions('StairGlass');
+  const wall = positions('StairSolidWall');
+  assert.ok(Math.min(...glass.map((p) => p[0])) > Math.max(...wall.map((p) => p[0])));
+  const seats = JSON.parse(readFileSync(new URL('../public/models/seating.json', import.meta.url)));
+  assert.equal(seats.length, 98);
+  for (let f = 1; f <= 7; f++) assert.equal(seats.filter((s) => s.floor === f).length, 14);
+});
+
+test('worker GLB contains actual walking, sitting and clapping animation channels', () => {
+  const b = readFileSync(new URL('../public/models/worker.glb', import.meta.url));
+  const g = JSON.parse(b.subarray(20, 20 + b.readUInt32LE(12)).toString());
+  for (const name of ['Walk', 'Sitting', 'Clapping']) {
+    const animation = g.animations.find((a) => a.name.endsWith(`_${name}`));
+    assert.ok(animation?.channels.length > 10, `${name} must animate the skeleton`);
+  }
+  assert.ok(g.skins.length > 0);
+});
+
+test('market state toggles both ways and celebration expires without changing state', () => {
+  const state = new MarketState();
+  assert.equal(state.open, false); assert.equal(state.celebrating, false);
+  assert.equal(state.toggle(), true); assert.equal(state.celebrating, true);
+  state.update(8.1); assert.equal(state.celebrating, false); assert.equal(state.open, true);
+  assert.equal(state.toggle(), false); assert.equal(state.celebrating, true);
+  assert.equal(state.count, 2);
+  const a = seededRandom(), b = seededRandom();
+  for (let i = 0; i < 100; i++) assert.equal(a(), b());
+  for (let i = 0; i < 100; i++) {
+    const [x, y, z] = walkingPosition(i / 100 * Math.PI * 2, 2);
+    assert.equal(y, 0); assert.ok(x > -1 && x < 4 && z > -10 && z < 12);
+    assert.ok(Math.hypot(x, z + 2.5) > 1.5, 'Walkers avoid the market cube');
+  }
 });

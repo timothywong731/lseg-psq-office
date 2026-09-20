@@ -80,7 +80,75 @@ test('mobile layout fits and deep links open the launch balcony', async ({ page 
   const intro = await page.locator('.intro h1').boundingBox();
   const copy = await page.locator('.intro-copy').boundingBox();
   expect(copy.y).toBeGreaterThanOrEqual(intro.y + intro.height);
-  await page.screenshot({ path: '.work/mobile-verified.png', fullPage: true });
+  await page.screenshot({ path: '.work/mobile-final-check.png', fullPage: true });
+});
+
+test('market button toggles open and close, animates crowd, screens, confetti and lights', async ({ page }) => {
+  await openViewer(page, '#launch');
+  const before = await page.evaluate(() => window.getViewerState());
+  expect(before.people.seated).toBeGreaterThan(20);
+  expect(before.people.observer).toBeGreaterThan(30);
+  await page.locator('#market-toggle').click();
+  await expect(page.locator('#market-status')).toHaveText('Market Open');
+  await expect.poll(() => page.evaluate(() => window.getViewerState().lighting)).toBeGreaterThan(10);
+  const open = await page.evaluate(() => window.getViewerState());
+  expect(open.confetti).toBe(true); expect(open.crowdCheering).toBe(true);
+  expect(open.screenFrame).toBeGreaterThan(before.screenFrame);
+  expect(open.audioState).toBe('running');
+  await page.locator('#sound').uncheck();
+  await expect.poll(() => page.evaluate(() => window.getViewerState().audioState)).toBe('suspended');
+  await page.locator('#market-toggle').click();
+  await expect(page.locator('#market-status')).toHaveText('Market Close');
+  expect((await page.evaluate(() => window.getViewerState())).ceremonyCount).toBe(2);
+  await expect.poll(() => page.evaluate(() => window.getViewerState().celebrating), { timeout: 15_000 }).toBe(false);
+  expect((await page.evaluate(() => window.getViewerState())).confetti).toBe(false);
+});
+
+test('the actual 3D launch control can be clicked and dragging does not trigger it', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openViewer(page, '#launch');
+  await page.locator('#annotations').uncheck();
+  await page.locator('#sound').uncheck();
+  const rect = await page.locator('#scene').boundingBox();
+  const point = await page.evaluate(() => window.getViewerState().launchScreenPosition);
+  await page.mouse.click(rect.x + point[0], rect.y + point[1]);
+  await expect(page.locator('#market-status')).toHaveText('Market Open');
+  expect((await page.evaluate(() => window.getViewerState())).confetti).toBe(false);
+  await page.mouse.move(rect.x + point[0], rect.y + point[1]);
+  await page.mouse.down(); await page.mouse.move(rect.x + point[0] + 80, rect.y + point[1], { steps: 8 }); await page.mouse.up();
+  expect((await page.evaluate(() => window.getViewerState())).ceremonyCount).toBe(1);
+});
+
+test('people really move, seated clips run, and pause freezes the population', async ({ page }) => {
+  await openViewer(page);
+  const before = await page.evaluate(() => window.getViewerState());
+  await expect.poll(() => page.evaluate(() => window.getViewerState().seatedAnimationTime)).toBeGreaterThan(before.seatedAnimationTime + .2);
+  expect((await page.evaluate(() => window.getViewerState())).walkerPosition).not.toEqual(before.walkerPosition);
+  await page.locator('#people').uncheck();
+  const paused = await page.evaluate(() => window.getViewerState());
+  await page.waitForTimeout(300);
+  const after = await page.evaluate(() => window.getViewerState());
+  expect(after.seatedAnimationTime).toBe(paused.seatedAnimationTime);
+  expect(after.walkerPosition).toEqual(paused.walkerPosition);
+});
+
+test('additional viewpoints and continuous drone flight work and can be stopped', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openViewer(page);
+  for (const view of ['third', 'reception', 'lifts', 'office']) {
+    await page.locator('#more-views').selectOption(view);
+    await expect(page.locator('#scene')).toHaveAttribute('data-view', view);
+  }
+  await page.locator('#drone').click();
+  await expect(page.locator('#drone')).toHaveAttribute('aria-pressed', 'true');
+  const position = (await page.evaluate(() => window.getViewerState())).position;
+  await page.waitForTimeout(400);
+  expect((await page.evaluate(() => window.getViewerState())).position).not.toEqual(position);
+  await page.keyboard.press('Escape');
+  expect((await page.evaluate(() => window.getViewerState())).drone).toBe(false);
+  await page.locator('#drone').click();
+  await page.locator('button[data-view=entrance]').click();
+  expect((await page.evaluate(() => window.getViewerState())).drone).toBe(false);
 });
 
 test('a failed model download offers a usable recovery state', async ({ page }) => {

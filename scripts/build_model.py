@@ -65,6 +65,7 @@ material('CoolLight',(.71,.80,1),rough=.3,emission=2)
 material('LaunchButton',(.64,.71,.69),metal=.65,rough=.26)
 
 BATCH={}
+SEATS=[]
 def geometry(group, mat, verts, faces, uvs=None):
     key=(group,mat)
     batch=BATCH.setdefault(key, {'v':[], 'f':[], 'uv':[]})
@@ -131,15 +132,26 @@ for f in range(1,FLOORS+1):
         for yy in range(-12,13,4):
             box('OfficeLights','Light',(side*8.1,yy,z+3.67),(1.10,1.15,.045))
             box('OfficeColumns','Limestone',(side*9.9,yy,z+1.8),(.27,.29,3.6))
-            if f<5:
+            if f<=7:
                 box('Desks','Desk',(side*8.1,yy,z+.77),(1.6,.8,.07))
                 for dx in [-.65,.65]:
                     box('DeskLegs','SteelDark',(side*8.1+dx,yy,z+.39),(.04,.62,.75))
-                box('Monitors','Monitor',(side*8.1,yy+.16,z+1.10),(.64,.06,.38))
-                box('Monitors','SteelDark',(side*8.1,yy+.16,z+.9),(.035,.05,.24))
-                box('Chairs','Chair',(side*8.1,yy-.85,z+.46),(.53,.50,.11))
-                box('Chairs','Chair',(side*8.1,yy-1.08,z+.78),(.55,.075,.62))
-                cylinder('DeskLegs','SteelDark',(side*8.1,yy-.85,z+.22),.065,.40,8)
+                for dx in [-.36,.36]:
+                    box('Monitors','Monitor',(side*8.1+dx,yy+.16,z+1.13),(.68,.055,.42))
+                    box('MonitorStands','SteelDark',(side*8.1+dx,yy+.16,z+.94),(.04,.06,.27))
+                    box('MonitorStands','SteelDark',(side*8.1+dx,yy+.12,z+.825),(.28,.22,.018))
+                    screen('DesktopScreens','MarketDisplay',(side*8.1+dx,yy+.126,z+1.13),.63,.365)
+                box('Keyboards','Monitor',(side*8.1-.12,yy-.22,z+.823),(.48,.17,.025))
+                for row in range(2):
+                    for col in range(8):
+                        box('KeyboardKeys','Steel',(side*8.1-.33+col*.055,yy-.26+row*.065,z+.839),(.037,.044,.006))
+                box('MousePads','Carpet',(side*8.1+.47,yy-.2,z+.813),(.25,.22,.009))
+                cylinder('Mouse','SteelDark',(side*8.1+.47,yy-.2,z+.833),.036,.038,10)
+                box('DeskDrawer','Desk',(side*8.1+.60,yy,z+.38),(.31,.58,.64))
+                for dz in [.22,.46,.65]:
+                    box('DrawerHandles','SteelDark',(side*8.1+.60,yy-.30,z+dz),(.16,.015,.016))
+                cylinder('DeskMugs','StoneLight',(side*8.1-.67,yy-.16,z+.88),.045,.12,12)
+                SEATS.append({'x':side*8.1,'y':yy-.70,'z':z,'floor':f})
     # End galleries close the rectangular atrium, with glazed balcony rails.
     for end in [-1,1]:
         box('FloorSlabs','Limestone',(0,end*15.5,z-.20),(12,3,.38))
@@ -149,13 +161,13 @@ for f in range(1,FLOORS+1):
             box('BalconyRail','Steel',(0,end*13.99,z+1.14),(12,.055,.065))
             for xx in range(-6,7,2):
                 box('BalconyRail','Steel',(xx,end*14,z+.56),(.045,.06,1.1))
-        if f==1 and end==-1:
+        if end==-1:
             for side in [-1,1]:
                 box('LiftLobbyWall','Limestone',(side*6.1,-17,z+1.7),(7,.3,3.6))
             box('LiftLobbyWall','Limestone',(0,-17,z+3.25),(5.2,.3,.65))
         else:
             box('EndWalls','OfficeWall',(0,end*17,z+1.7),(21,.3,3.6))
-        for xx in ([-4,4] if f==1 and end==-1 else [-4,0,4]):
+        for xx in ([-4,4] if end==-1 else [-4,0,4]):
             box('EndOfficeGlass','Glass',(xx,end*16.80,z+1.8),(2.7,.05,2.7))
             box('EndOfficeFrames','Frame',(xx-1.35,end*16.76,z+1.8),(.07,.06,2.7))
             box('OfficeLights','Light',(xx,end*15.4,z+3.69),(1.4,.48,.04))
@@ -166,25 +178,34 @@ for end in [-1,1]:
     for side in [-1,1]:
         box('EntranceStone','Limestone',(side*4.4,end*16.8,2),(4,.38,4))
     box('EntranceStone','Limestone',(0,end*16.8,3.6),(6,.4,.85))
-    for xx in [-2.0,-.66,.66,2.0]:
+    for xx in ([-2.0,-.66,.66,2.0] if end==1 else []):
         box('EntryGlass','Glass',(xx,end*16.79,1.6),(1.28,.03,3.1))
         box('EntryFrames','Steel',(xx-.66,end*16.76,1.6),(.055,.08,3.2))
         box('EntryHandles','Steel',(xx+.3,end*16.68,1.3),(.035,.1,.65))
-    for xx in [-1.5,0,1.5]:
+    for xx in ([-1.5,0,1.5] if end==1 else []):
         box('SecurityGates','Steel',(xx,end*14.8,.52),(.30,1.3,1.04))
         box('SecurityGateGlass','Glass',(xx+.65,end*14.8,.72),(1.0,.05,.85))
     if end==1:
-        box('DisplayFrame','Frame',(0,end*14.03,6.45),(7.2,.14,3.55))
-        screen('MarketBoards','MarketDisplay',(0,end*13.93,6.45),7,3.35,right=(end,0,0))
+        box('DisplayFrame','Frame',(0,end*14.03,6.04),(11.8,.16,3.68))
+        screen('MarketBoards','MarketDisplay',(0,end*13.93,6.04),11.55,3.50,right=(end,0,0))
 
 for side in [-1,1]:
     for yy in [-12,-6,0,6,12]:
         cylinder('LobbyColumns','Steel',(side*6.55,yy,2.0),.31,4,24)
-    box('ReceptionWall','Oak',(side*10,1,1.9),(.2,24,3.8))
-    box('ReceptionLights','Light',(side*9.86,1,3.2),(.05,24,.07))
-    box('ReceptionDesk','Reception',(side*8.9,-3,.52),(1.05,8,1.04))
-    box('ReceptionDesk','StoneLight',(side*8.9,-3,1.065),(1.15,8.1,.065))
-    for yy in [4,7,10]:
+    box('ReceptionWall','Reception' if side==1 else 'Limestone',(side*10,1,1.9),(.2,28,3.8))
+    box('ReceptionLights','Light',(side*9.86,1,3.55),(.05,28,.045))
+    if side==1:
+        # Single elongated reception desk, navy face, pale cantilevered top.
+        box('ReceptionDesk','Reception',(8.6,6.4,.53),(1.05,10.8,1.06))
+        box('ReceptionCounter','StoneLight',(8.56,6.4,1.075),(1.27,11.15,.07))
+        box('ReceptionPlinth','Steel',(8.59,6.4,.075),(1.05,10.7,.13))
+        box('ReceptionReturn','Reception',(8.85,11.75,.53),(1.55,.55,1.06))
+        box('ReceptionReturn','StoneLight',(8.85,11.75,1.075),(1.65,.65,.07))
+        for yy in [2.5,5.9,9.3]:
+            screen('ReceptionVideoWall','MarketDisplay',(9.86,yy,2.45),3.25,1.28,right=(0,-1,0))
+            box('ReceptionPC','Monitor',(8.8,yy,1.25),(.07,.52,.33))
+            cylinder('ReceptionDeskPlants','Leaf',(8.5,yy+.8,1.23),.10,.24,12)
+    for yy in ([-10,-6,-2] if side==1 else []):
         cylinder('LobbySeats','StoneWarm',(side*8.4,yy,.3),.7,.45,24)
         cylinder('LobbySeats','Chair',(side*8.4,yy,.55),.64,.12,24)
         box('LobbySeats','Chair',(side*8.9,yy,.82),(.12,1.05,.55))
@@ -200,7 +221,7 @@ for i in range(STAIRS):
     box('StairTreads','StoneLight',(-4.6,yy,zz-.085),(2.6,run/STAIRS+.015,.17))
     box('StairRisers','Limestone',(-4.6,yy-run/STAIRS/2,zz-.17),(2.6,.04,.17))
     box('StairNosing','Steel',(-4.6,yy-run/STAIRS/2+.01,zz+.002),(2.61,.035,.02))
-for xx in [-5.92,-3.28]:
+for xx in [-3.28]:
     a=(xx,start-.20,STEP+.78); b=(xx,start+run,.78)
     beam('StairRails','Steel',a,b,.055)
     geometry('StairGlass','Glass',[(xx,start-.2,STEP-.16),(xx,start+run,.05),(xx,start+run,.8),(xx,start-.2,STEP+.85)],[(0,1,2,3)])
@@ -208,16 +229,22 @@ for xx in [-5.92,-3.28]:
         t=i/7;z=(1-t)*STEP
         beam('StairRails','Steel',(xx,start+t*run,z),(xx,start+t*run,z+.78),.045)
 box('StairLanding','StoneLight',(-4.6,-14.5,STEP-.1),(2.6,1.4,.2))
+# Continuous solid stone wall on the office side; only the void side is glass.
+box('StairSolidWall','Limestone',(-5.99,-3.8,2.0),(.20,20.4,4.0))
+beam('StairWallHandrail','Steel',(-5.82,start-.2,STEP+.82),(-5.82,start+run,.82),.048)
+# Full-height separator at the stair foot, matching the adjacent glazed gate.
+box('StairSeparator','Glass',(-3.28,6.75,1.1),(.035,1.6,2.2))
+box('StairSeparatorFrame','Steel',(-3.28,7.53,1.1),(.055,.055,2.2))
 
 # Dark ribbon displays around the mezzanine, above and below office glass.
 for z in [3.90,7.96]:
     for side in [-1,1]:
         box('TickerFrames','Frame',(side*5.94,0,z),(.12,28,.52))
-        screen('TickerBands','TickerDisplay',(side*5.865,0,z),28,.43,right=(0,-side,0))
+        screen('NewsBands' if z>5 else 'TickerBands','TickerDisplay',(side*5.865,0,z),28,.43,right=(0,-side,0))
     for end in [-1,1]:
         box('TickerFrames','Frame',(0,end*13.91,z),(12,.12,.52))
         if not (end==-1 and z<5):
-            screen('TickerBands','TickerDisplay',(0,end*13.835,z),12,.43,right=(end,0,0))
+            screen('NewsBands' if z>5 else 'TickerBands','TickerDisplay',(0,end*13.835,z),12,.43,right=(end,0,0))
 
 # 1F launch balcony: broad concave brushed steel parapet, central square control.
 box('LaunchParapet','Reception',(0,-13.87,STEP+.45),(7.6,.5,.9))
@@ -236,22 +263,32 @@ box('LaunchButton','LaunchButton',(0,-14.41,STEP+1.132),(.40,.40,.028),buttonrot
 for i in range(12):
     a=i*math.tau/12
     beam('LaunchButtonEngraving','SteelDark',(.06*math.cos(a),-14.41+.06*math.sin(a),STEP+1.155),(.145*math.cos(a),-14.41+.145*math.sin(a),STEP+1.155),.011)
-# Lift lobby: a deep axial corridor, silver lift doors and repeated luminous portals.
-box('LiftLobbyFloor','StoneLight',(0,-21.5,STEP-.12),(5.2,9,.24))
-box('LiftLobbyCeiling','OfficeWall',(0,-21.5,STEP+3.35),(5.2,9,.2))
-for side in [-1,1]:
-    box('LiftLobbyWalls','Limestone',(side*2.65,-21.5,STEP+1.6),(.25,9,3.2))
-    for yy in [-18.8,-22,-25]:
-        box('LiftDoorFrame','Frame',(side*2.49,yy,STEP+1.25),(.12,1.95,2.6))
-        for sign in [-1,1]:
-            box('LiftDoors','Steel',(side*2.405,yy+sign*.46,STEP+1.25),(.03,.895,2.48))
-        box('LiftCallPanel','Monitor',(side*2.39,yy+1.10,STEP+1.3),(.03,.13,.28))
-for yy in [-17.4,-20.1,-22.8,-25.5]:
-    box('LiftPortalLights','Light',(0,yy,STEP+3.19),(5.0,.08,.06))
+# Six lifts on EVERY level, including G/F: three doors on each corridor wall.
+for f in range(FLOORS+1):
+    z=f*STEP
+    box('LiftLobbyFloor','StoneLight',(0,-21.5,z-.12),(5.2,9,.24))
+    box('LiftLobbyCeiling','OfficeWall',(0,-21.5,z+3.35),(5.2,9,.2))
+    box('LiftLobbyBack','Limestone',(0,-26,z+1.6),(5.2,.20,3.2))
     for side in [-1,1]:
-        box('LiftPortalLights','Light',(side*2.46,yy,STEP+1.75),(.06,.08,2.9))
-box('LobbyScreenFrame','Frame',(-3.95,-16.77,STEP+1.9),(2.3,.15,1.6))
-screen('LobbyMarketScreen','MarketDisplay',(-3.95,-16.675,STEP+1.9),2.2,1.5,right=(-1,0,0))
+        box('LiftLobbyWalls','Limestone',(side*2.65,-21.5,z+1.6),(.25,9,3.2))
+        for yy in [-18.8,-22,-25]:
+            box('LiftDoorFrame','Frame',(side*2.49,yy,z+1.25),(.12,1.95,2.6))
+            for sign in [-1,1]:
+                box('LiftDoors','Steel',(side*2.405,yy+sign*.46,z+1.25),(.03,.895,2.48))
+            box('LiftCallPanel','Monitor',(side*2.39,yy+1.10,z+1.3),(.03,.13,.28))
+            box('LiftFloorIndicator','CoolLight',(side*2.385,yy,z+2.67),(.035,.30,.11))
+            cylinder('LiftCallButton','Steel',(side*2.375,yy+1.10,z+1.29),.03,.035,8)
+    for yy in [-17.4,-20.1,-22.8,-25.5]:
+        box('LiftPortalLights','Light',(0,yy,z+3.19),(5.0,.08,.06))
+        for side in [-1,1]:
+            box('LiftPortalLights','Light',(side*2.46,yy,z+1.75),(.06,.08,2.9))
+for z in [0,STEP]:
+    box('LobbyScreenFrame','Frame',(-4.0,-16.77,z+2.05),(3.0,.15,2.35))
+    screen('LobbyMarketScreen','MarketDisplay',(-4.0,-16.675,z+2.05),2.85,2.20,right=(-1,0,0))
+    box('LobbyScreenPlaque','Monitor',(-4,-16.65,z+.59),(.32,.06,.40))
+    for side in [-1,1]:
+        cylinder('GalleryDownlights','Light',(side*3.8,-15.5,z+3.78),.09,.025,12)
+screen('LaunchBanner','CubeDisplay',(0,-13.60,STEP+.43),7.5,.79,right=(-1,0,0))
 
 # Iconic tilted four-sided market cube, supported by a perforated steel plinth.
 cylinder('MarketPedestal','Steel',(0,2.5,.97),.45,1.94,32)
@@ -308,7 +345,7 @@ for (group,mat),data in BATCH.items():
         halfwidth=7.25-(max(-14,min(14,y))+14)*3/28
         return (x*halfwidth/6,y,z)
     untapered={'MarketCube','MarketCubeScreens','MarketPedestal','PedestalPerforations','LaunchConsole','LaunchButton','LaunchButtonBezel','LaunchButtonEngraving','LiftLobbyFloor','LiftLobbyCeiling','LiftLobbyWalls','LiftDoorFrame','LiftDoors','LiftCallPanel','LiftPortalLights'}
-    verts=data['v'] if group in untapered else [taper(v) for v in data['v']]
+    verts=data['v'] if group in untapered or group.startswith('Lift') else [taper(v) for v in data['v']]
     mesh.from_pydata(verts,[],data['f']);mesh.update()
     mesh.materials.append(MATS[mat])
     if mat.endswith('Display'):
@@ -349,7 +386,11 @@ for area_ in bpy.context.screen.areas:
     if area_.type=='VIEW_3D': area_.spaces.active.overlay.show_overlays=False
 bpy.ops.wm.save_as_mainfile(filepath=str(ROOT/'assets/paternoster.blend'))
 for obj in scene.objects: obj.select_set(obj.type=='MESH')
-bpy.ops.export_scene.gltf(filepath=str(out/'paternoster.glb'),export_format='GLB',use_selection=True,export_extras=True,export_yup=True)
+bpy.ops.export_scene.gltf(filepath=str(out/'paternoster.glb'),export_format='GLB',use_selection=True,use_active_scene=True,export_extras=True,export_yup=True)
 stats={'seed':SEED,'scene':scene.name,'objects':len([o for o in scene.objects if o.type=='MESH']),'vertices':sum(len(o.data.vertices) for o in scene.objects if o.type=='MESH'),'floors':FLOORS,'height':roofz,'plan_shape':'trapezium','wide_end':14.5,'narrow_end':8.5,'stair_rises_toward':'launch balcony','launch_button':True,'estimated_dimensions':True}
 (out/'metadata.json').write_text(json.dumps(stats,indent=2))
+stats.update({'lift_levels':FLOORS+1,'lifts_per_level':6,'lift_count':6*(FLOORS+1),'workstations':len(SEATS),'revision':2})
+(out/'metadata.json').write_text(json.dumps(stats,indent=2))
+seats=[{'position':[taper((s['x'],s['y'],s['z']))[0],s['z'],-s['y']], 'floor':s['floor']} for s in SEATS]
+(out/'seating.json').write_text(json.dumps(seats))
 print(json.dumps(stats))

@@ -7,6 +7,10 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { VIEWS, POINTS } from './views.js';
+import { MarketState } from './simulation.js';
+import { MarketScreens } from './screens.js';
+import { Occupants } from './occupants.js';
+import { Ceremony } from './ceremony.js';
 
 // Transparent glazing should not occlude furniture in the ambient-occlusion pass.
 class InteriorAOPass extends GTAOPass {
@@ -21,13 +25,20 @@ class InteriorAOPass extends GTAOPass {
 
 /** Owns the actual Blender GLB, camera, lighting and the animated ticker UVs. */
 export class InteriorViewer {
-  constructor(canvas, { onProgress, onInteraction, onError }) {
+  constructor(canvas, { onProgress, onInteraction, onError, onCeremony, onDrone }) {
     this.canvas = canvas;
     this.onProgress = onProgress;
     this.onInteraction = onInteraction;
     this.onError = onError;
+    this.onCeremony = onCeremony;
+    this.onDrone = onDrone;
+    this.market = new MarketState();
+    this.sound = true;
+    this.drone = false;
+    this.droneTime = 0;
     this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.tickerPlaying = !this.reducedMotion;
+    this.peoplePlaying = !this.reducedMotion;
     this.annotations = true;
     this.currentView = 'atrium';
     this.roofObjects = [];
@@ -37,6 +48,7 @@ export class InteriorViewer {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color('#dce6e8');
     this.scene.fog = new THREE.Fog('#dce6e8', 58, 105);
+    this.ceremony = new Ceremony(this.scene);
     this.camera = new THREE.PerspectiveCamera(70, 1, 0.06, 150);
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
@@ -97,12 +109,24 @@ export class InteriorViewer {
     this.controls.rotateSpeed = 0.48;
     this.controls.addEventListener('start', () => {
       this.transition = null;
+      this.drone = false;
+      this.onDrone?.(false);
       this.onInteraction?.();
     });
     this.controls.listenToKeyEvents(canvas);
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(canvas.parentElement);
     this.raycaster = new THREE.Raycaster();
+    canvas.addEventListener('pointerdown', (event) => { this.pointerDown = [event.clientX, event.clientY]; });
+    canvas.addEventListener('pointerup', (event) => {
+      if (!this.ready || !this.pointerDown || event.button !== 0) return;
+      if (Math.hypot(event.clientX - this.pointerDown[0], event.clientY - this.pointerDown[1]) > 6) return;
+      const rect = canvas.getBoundingClientRect();
+      const ray = new THREE.Raycaster();
+      ray.setFromCamera(new THREE.Vector2((event.clientX - rect.left) / rect.width * 2 - 1, -(event.clientY - rect.top) / rect.height * 2 + 1), this.camera);
+      const hit = ray.intersectObjects(this.meshes, false).find((h) => h.object.visible);
+      if (hit && /^(LaunchButton|LaunchConsole)/.test(hit.object.userData.component)) this.toggleMarket();
+    });
     this._projected = new THREE.Vector3();
     this._direction = new THREE.Vector3();
     this._lastTime = 0;
@@ -155,6 +179,15 @@ export class InteriorViewer {
       if (obj.material.map) obj.material.map.anisotropy = Math.min(8, this.renderer.capabilities.getMaxAnisotropy());
     });
     this.scene.add(this.model);
+    this.screens = new MarketScreens(this.model);
+    const [worker, chair, seatsResponse] = await Promise.all([
+      loader.loadAsync(`${import.meta.env.BASE_URL}models/worker.glb`),
+      loader.loadAsync(`${import.meta.env.BASE_URL}models/chair.glb`),
+      fetch(`${import.meta.env.BASE_URL}models/seating.json`),
+    ]);
+    if (!seatsResponse.ok) throw new Error('Could not load workstation layout');
+    this.occupants = new Occupants(this.scene, worker, chair, await seatsResponse.json());
+    this.screens.update(0, this.market, false, this.reducedMotion);
     this.ready = true;
     this.canvas.dataset.loaded = 'true';
     this.onProgress?.(1);
@@ -176,6 +209,8 @@ export class InteriorViewer {
   setView(name, animate = true) {
     const view = VIEWS[name];
     if (!view) return;
+    this.drone = false;
+    this.onDrone?.(false);
     this.currentView = name;
     this.canvas.dataset.view = name;
     const nextPosition = new THREE.Vector3().fromArray(view.position);
@@ -211,6 +246,27 @@ export class InteriorViewer {
   setRoof(visible) {
     this.roofObjects.forEach((obj) => { obj.visible = visible; });
     this.canvas.dataset.roof = String(visible);
+  }
+
+  setDrone(active) {
+    if (active) {
+      this.setView('drone');
+      this.droneTime = 0;
+    }
+    this.drone = active;
+    this.onDrone?.(active);
+  }
+
+  toggleMarket() {
+    if (!this.ready) return;
+    const open = this.market.toggle();
+    this.ceremony.trigger(open, this.reducedMotion, this.sound);
+    this.onCeremony?.(open);
+  }
+
+  getLaunchScreenPosition() {
+    const p = new THREE.Vector3(0, 5.245, 14.41).project(this.camera);
+    return [(p.x * .5 + .5) * this.width, (-p.y * .5 + .5) * this.height];
   }
 
   setAnnotations(visible) {
@@ -259,9 +315,18 @@ export class InteriorViewer {
       this.camera.fov = THREE.MathUtils.lerp(tr.fromFov, tr.fov, t);
       this.camera.updateProjectionMatrix();
       if (progress >= 1) this.transition = null;
+    } else if (this.drone) {
+      this.droneTime += dt;
+      const a = this.droneTime * Math.PI * 2 / 90;
+      this.camera.position.set(2.8 * Math.cos(a), 8 + 15 * (.5 - .5 * Math.cos(a)), 11 * Math.cos(a) + 1.5 * Math.sin(a));
+      this.controls.target.set(-.4 * Math.sin(a), 5.1 + 5 * (.5 - .5 * Math.cos(a)), -1.5);
     }
     this.controls.update();
     if (this.tickerPlaying) this.tickerTextures.forEach((texture) => { texture.offset.x = (texture.offset.x + dt * 0.018) % 1; });
+    this.market.update(dt);
+    this.screens?.update(dt, this.market, this.tickerPlaying, this.reducedMotion);
+    this.occupants?.update(dt, this.peoplePlaying, this.market.celebrating);
+    this.ceremony.update(dt);
     this.composer.render();
     if (++this._frameCount % 6 === 0) this.updatePoints();
   }
@@ -279,6 +344,7 @@ export class InteriorViewer {
   }
 
   dispose() {
+    this.ceremony.dispose();
     this.renderer.setAnimationLoop(null);
     this.resizeObserver.disconnect();
     this.controls.dispose();

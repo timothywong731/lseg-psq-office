@@ -25,13 +25,22 @@
         </div>
 
         <section class="view-section" aria-labelledby="explore-label">
-          <div class="section-heading"><h2 id="explore-label">EXPLORE THE INTERIOR</h2><span>03 VIEWS</span></div>
+          <div class="section-heading"><h2 id="explore-label">EXPLORE THE INTERIOR</h2><span>09 VIEWS</span></div>
           <nav class="views" aria-label="Camera viewpoints">
             <button class="view-button active" data-view="atrium" aria-pressed="true"><span class="view-number">01</span><span class="view-copy"><strong>The atrium</strong><small>Light at the heart of the building</small></span><span class="view-arrow" aria-hidden="true">↗</span></button>
             <button class="view-button" data-view="entrance" aria-pressed="false"><span class="view-number">02</span><span class="view-copy"><strong>The entrance</strong><small>A sense of arrival</small></span><span class="view-arrow" aria-hidden="true">↗</span></button>
             <button class="view-button" data-view="balcony" aria-pressed="false"><span class="view-number">03</span><span class="view-copy"><strong>The balcony</strong><small>A different perspective</small></span><span class="view-arrow" aria-hidden="true">↗</span></button>
           </nav>
           <button id="launch-view" class="launch-link">Explore the 1F launch button <span aria-hidden="true">↗</span></button>
+          <label class="more-views-label" for="more-views">More perspectives</label>
+          <select id="more-views" aria-label="More camera viewpoints">
+            <option value="">Choose a perspective</option>
+            <option value="third">3F — Atrium overlook</option>
+            <option value="reception">G/F — Reception</option>
+            <option value="lifts">1F — Six-lift lobby</option>
+            <option value="office">2F — Office desks</option>
+          </select>
+          <button id="drone" class="drone-button" aria-pressed="false"><span aria-hidden="true">◎</span> <span id="drone-label">Start continuous drone view</span></button>
         </section>
 
         <section class="atmosphere" aria-labelledby="atmosphere-label">
@@ -40,6 +49,8 @@
           <label class="toggle-row" for="roof"><span>Glass roof</span><input id="roof" type="checkbox" checked/><span class="switch" aria-hidden="true"></span></label>
           <label class="toggle-row" for="annotations"><span>Points of interest</span><input id="annotations" type="checkbox" checked/><span class="switch" aria-hidden="true"></span></label>
           <label class="toggle-row" for="ticker"><span>Animated tickers</span><input id="ticker" type="checkbox" checked/><span class="switch" aria-hidden="true"></span></label>
+          <label class="toggle-row" for="people"><span>Animated people</span><input id="people" type="checkbox" checked/><span class="switch" aria-hidden="true"></span></label>
+          <label class="toggle-row" for="sound"><span>Ceremony sound</span><input id="sound" type="checkbox" checked/><span class="switch" aria-hidden="true"></span></label>
         </section>
 
         <section class="plan-section" aria-label="Atrium orientation">
@@ -61,7 +72,7 @@
       <main class="main-panel">
         <header class="topbar"><span class="breadcrumb">SPACES <span>/</span> PATERNOSTER SQUARE</span><div class="model-status" role="status"><span class="status-dot"></span><span id="status-text">Loading model</span></div></header>
         <div class="viewport" id="viewport">
-          <canvas id="scene" tabindex="0" aria-label="Interactive 3D office interior. Drag to orbit, scroll to zoom, right-drag to pan. Use keys 1, 2 or 3 to change viewpoint and R to reset." aria-describedby="navigation-help"></canvas>
+          <canvas id="scene" tabindex="0" aria-label="Interactive 3D office interior. Drag to orbit, scroll to zoom, right-drag to pan. Keys 1 through 8 change viewpoint, D toggles drone flight, R resets. Click the metal launch button to open or close the market." aria-describedby="navigation-help"></canvas>
           <div class="viewport-top"><span class="tag"><span class="tiny-square"></span> INTERIOR EXPLORER</span><span class="render-label">BLENDER MODEL · REAL-TIME VIEW</span></div>
 
           <div class="toolbar" role="group" aria-label="Viewer actions">
@@ -78,6 +89,11 @@
           </div>
 
           <div class="view-caption"><p class="eyebrow" id="view-kicker">01 / THE CENTRAL SPACE</p><h2 id="view-title">Looking up. Looking in.</h2><p id="view-description">Seven layers of glass frame a shared, light-filled heart.</p></div>
+          <div class="ceremony-panel">
+            <div class="market-status"><span id="market-dot"></span><span id="market-status" role="status" aria-live="polite">Market Close</span><span class="demo-label">SIMULATION</span></div>
+            <button id="market-toggle" class="market-toggle" aria-pressed="false"><span class="launch-symbol" aria-hidden="true">◇</span><span id="market-action">Open the market</span><span aria-hidden="true">↗</span></button>
+            <p>Or press the metal button on the 1F balcony</p>
+          </div>
           <button id="tour" class="tour-button" aria-pressed="false"><span class="play-icon" aria-hidden="true">▷</span><span id="tour-label">Take a guided tour</span><span class="tour-duration">4 STOPS</span></button>
 
           <div id="loading" class="loading-panel" role="status"><div class="loading-mark">PS</div><p>Opening the space<span class="loading-dots">…</span></p><div class="loading-track"><span id="load-progress"></span></div><small>Preparing your perspective</small></div>
@@ -89,7 +105,7 @@
       </main>
     </div>
 
-    <dialog id="about-dialog" aria-labelledby="about-title"><button class="close-button" id="close-about" aria-label="Close about dialog">×</button><p class="eyebrow">BEHIND THE SPACE</p><h2 id="about-title">Built from a<br/><em>different perspective.</em></h2><p>A visual reconstruction of the Paternoster Square office, informed by eleven photographs and three walkthrough videos recorded in September 2026.</p><p>The atrium, glazed galleries, entrance gates, stair and market-display cube were procedurally modelled in Blender and brought to the browser with Three.js.</p><div class="about-note"><strong>A spatial interpretation</strong><p>Dimensions, floor arrangement and materials are estimated from the references, not a measured survey. Market graphics are illustrative, not live data. This independent study is not affiliated with or endorsed by LSEG.</p></div><a class="primary-button" href="./models/paternoster.glb" download="paternoster-square.glb">Download the Blender-built model <span aria-hidden="true">↓</span></a></dialog>
+    <dialog id="about-dialog" aria-labelledby="about-title"><button class="close-button" id="close-about" aria-label="Close about dialog">×</button><p class="eyebrow">BEHIND THE SPACE</p><h2 id="about-title">Built from a<br/><em>different perspective.</em></h2><p>A visual reconstruction of the Paternoster Square office, informed by all 28 reference images and three walkthrough videos, including the September 2026 visit.</p><p>The tapered atrium, launch balcony, reception and six-lift lobbies were modelled in Blender and brought to the browser with Three.js. The launch ceremony includes animated displays, confetti, clapping and synthesized crowd sound.</p><div class="about-note"><strong>A spatial interpretation</strong><p>Dimensions and materials are estimated from the references, not a measured survey. Market graphics are illustrative, not live data. This independent study is not affiliated with or endorsed by LSEG.</p></div><p class="asset-credits">People: <a href="https://poly.pizza/m/HMnuH5geEG" target="_blank" rel="noreferrer">Man by Quaternius</a> (CC0). Chair: <a href="https://sketchfab.com/3d-models/448bfab6a5bb4d94ba439a50ddc89a29" target="_blank" rel="noreferrer">Low Poly Office Chair by NoodleBaguette</a>, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a>; scaled and textures resized.</p><a class="primary-button" href="./models/paternoster.glb" download="paternoster-square.glb">Download the Blender-built model <span aria-hidden="true">↓</span></a></dialog>
     <script type="module" src="./src/main.js"></script>
   </body>
 </html>
